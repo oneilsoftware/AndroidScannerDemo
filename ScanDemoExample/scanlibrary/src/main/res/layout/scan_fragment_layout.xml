@@ -13,7 +13,35 @@
         android:background="@color/bottom_background_color"
         android:orientation="horizontal"
         android:padding="@dimen/bottom_bar_padding"
+        android:visibility="gone"
         android:text="@string/scan"></Button>
+
+    <RelativeLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+
+        android:layout_alignParentBottom="true">
+
+        <ImageView
+            android:id="@+id/closeButton"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:padding="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_action_cancel"/>
+
+        <ImageView
+            android:id="@+id/confirmButton"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_done"
+            android:padding="10dp"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="10dp"
+            android:layout_alignParentEnd="true"/>
+    </RelativeLayout>
 
     <FrameLayout
         android:layout_width="match_parent"

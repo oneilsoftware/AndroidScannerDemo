@@ -31,6 +31,8 @@ public class ResultFragment extends Fragment {
     private Button grayModeButton;
     private Button bwButton;
     private Bitmap transformed;
+    private ImageView closeButton;
+    private ImageView confirmButton;
     private static ProgressDialogFragment progressDialogFragment;
 
     public ResultFragment() {
@@ -49,14 +51,20 @@ public class ResultFragment extends Fragment {
         originalButton.setOnClickListener(new OriginalButtonClickListener());
         MagicColorButton = (Button) view.findViewById(R.id.magicColor);
         MagicColorButton.setOnClickListener(new MagicColorButtonClickListener());
+        MagicColorButton.setVisibility(View.GONE);
         grayModeButton = (Button) view.findViewById(R.id.grayMode);
         grayModeButton.setOnClickListener(new GrayButtonClickListener());
         bwButton = (Button) view.findViewById(R.id.BWMode);
         bwButton.setOnClickListener(new BWButtonClickListener());
+        bwButton.setVisibility(View.GONE);
         Bitmap bitmap = getBitmap();
         setScannedImage(bitmap);
         doneButton = (Button) view.findViewById(R.id.doneButton);
         doneButton.setOnClickListener(new DoneButtonClickListener());
+        confirmButton = (ImageView)view.findViewById(R.id.confirmButton);
+        confirmButton.setOnClickListener(new DoneButtonClickListener());
+        closeButton = (ImageView)view.findViewById(R.id.closeButton);
+        closeButton.setOnClickListener(new CloseButtonClickListener());
     }
 
     private Bitmap getBitmap() {
@@ -110,6 +118,13 @@ public class ResultFragment extends Fragment {
                     }
                 }
             });
+        }
+    }
+
+    private class CloseButtonClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            getActivity().finish();
         }
     }
 

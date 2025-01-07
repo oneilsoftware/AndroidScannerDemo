@@ -3,11 +3,14 @@ package com.scanlibrary;
 import android.Manifest;
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -38,6 +41,7 @@ public class PickImageFragment extends Fragment {
     private ImageButton galleryButton;
     private Uri fileUri;
     private IScanner scanner;
+    private ProgressDialogFragment progressDialogFragment;
     private static final int MY_CAMERA_REQUEST_CODE = 100;
 
     @Override
@@ -70,7 +74,7 @@ public class PickImageFragment extends Fragment {
 
     private void clearTempImages() {
         try {
-            File tempFolder = new File(ScanConstants.IMAGE_PATH);
+            File tempFolder = new File(getActivity().getExternalFilesDir(null).getPath());
             for (File f : tempFolder.listFiles())
                 f.delete();
         } catch (Exception e) {
@@ -125,10 +129,10 @@ public class PickImageFragment extends Fragment {
             Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
             File file = createImageFile();
             boolean isDirectoryCreated = file.getParentFile().mkdirs();
-            Log.d("", "openCamera: isDirectoryCreated: " + isDirectoryCreated);
+            Log.d("ScanLibraryUtils", "openCamera: isDirectoryCreated: " + isDirectoryCreated);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 Uri tempFileUri = FileProvider.getUriForFile(getActivity().getApplicationContext(),
-                        "com.scanlibrary.provider", // As defined in Manifest
+                        "com.oneilsoft.oneilmobile.provider", // As defined in Manifest
                         file);
                 cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, tempFileUri);
             } else {
@@ -145,7 +149,7 @@ public class PickImageFragment extends Fragment {
         clearTempImages();
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new
                 Date());
-        File file = new File(ScanConstants.IMAGE_PATH, "IMG_" + timeStamp +
+        File file = new File(getActivity().getExternalFilesDir(null), "IMG_" + timeStamp +
                 ".jpg");
         fileUri = Uri.fromFile(file);
         return file;
@@ -153,7 +157,7 @@ public class PickImageFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d("", "onActivityResult" + resultCode);
+        Log.d("ScanLibraryUtils", "onActivityResult" + resultCode);
         Bitmap bitmap = null;
         if (resultCode == Activity.RESULT_OK) {
             try {
@@ -184,15 +188,57 @@ public class PickImageFragment extends Fragment {
     }
 
     private Bitmap getBitmap(Uri selectedimg) throws IOException {
+        Log.d("ScanLibraryUtils", "pick getBitmap start");
         BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 3;
+        options.inSampleSize = 2;
         AssetFileDescriptor fileDescriptor = null;
         fileDescriptor =
                 getActivity().getContentResolver().openAssetFileDescriptor(selectedimg, "r");
+        Matrix matrix = new Matrix();
+        ExifInterface exif = null;
+        int rotation = 0;
+        try {
+            exif = new ExifInterface(selectedimg.getPath());
+            rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            int rotationInDegrees = exifToDegrees(rotation);
+            if (rotation != 0) {
+                matrix.preRotate(rotationInDegrees);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         Bitmap original
                 = BitmapFactory.decodeFileDescriptor(
                 fileDescriptor.getFileDescriptor(), null, options);
-        return original;
+        Log.d("ScanLibraryUtils", String.format("pick getBitmap start C h/w: %d, %d", original.getWidth(), original.getHeight()));
+
+        int width = original.getWidth();
+        int height = original.getHeight();
+
+        if (rotation == 0 && width > height)
+        {
+            Log.d("ScanLibraryUtils", "pick getBitmap rotate 90");
+            matrix.preRotate(90);
+        }
+
+        Bitmap newBitmap = Bitmap.createBitmap(original, 0, 0, width, height, matrix, true);
+        Log.d("ScanLibraryUtils", "pick getBitmap end D: " + newBitmap.getByteCount());
+        return newBitmap;
+    }
+
+    private static int exifToDegrees(int exifOrientation) {
+        Log.d("ScanLibraryUtils", "exifToDegrees " + exifOrientation);
+        switch (exifOrientation)
+        {
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                return 90;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                return 180;
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                return 270;
+        }
+        return 0;
     }
 
     @Override
@@ -206,5 +252,11 @@ public class PickImageFragment extends Fragment {
             }
 
         }
+    }
+
+    protected void showProgressDialog(String message) {
+        progressDialogFragment = new ProgressDialogFragment(message);
+        FragmentManager fm = getFragmentManager();
+        progressDialogFragment.show(fm, ProgressDialogFragment.class.toString());
     }
 }

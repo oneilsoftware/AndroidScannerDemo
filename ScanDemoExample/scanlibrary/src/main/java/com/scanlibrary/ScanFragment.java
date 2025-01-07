@@ -32,6 +32,8 @@ import java.util.Map;
 public class ScanFragment extends Fragment {
 
     private Button scanButton;
+    private ImageView closeButton;
+    private ImageView confirmButton;
     private ImageView sourceImageView;
     private FrameLayout sourceFrame;
     private PolygonView polygonView;
@@ -64,6 +66,10 @@ public class ScanFragment extends Fragment {
         sourceImageView = (ImageView) view.findViewById(R.id.sourceImageView);
         scanButton = (Button) view.findViewById(R.id.scanButton);
         scanButton.setOnClickListener(new ScanButtonClickListener());
+        confirmButton = (ImageView) view.findViewById(R.id.confirmButton);
+        confirmButton.setOnClickListener(new ScanButtonClickListener());
+        closeButton = (ImageView) view.findViewById(R.id.closeButton);
+        closeButton.setOnClickListener(new CloseButtonClickListener());
         sourceFrame = (FrameLayout) view.findViewById(R.id.sourceFrame);
         polygonView = (PolygonView) view.findViewById(R.id.polygonView);
         sourceFrame.post(new Runnable() {
@@ -162,6 +168,13 @@ public class ScanFragment extends Fragment {
         }
     }
 
+    private class CloseButtonClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            getActivity().finish();
+        }
+    }
+
     private void showErrorDialog() {
         SingleButtonDialogFragment fragment = new SingleButtonDialogFragment(R.string.ok, getString(R.string.cantCrop), "Error", true);
         FragmentManager fm = getActivity().getFragmentManager();
@@ -192,7 +205,7 @@ public class ScanFragment extends Fragment {
         float y2 = (points.get(1).y) * yRatio;
         float y3 = (points.get(2).y) * yRatio;
         float y4 = (points.get(3).y) * yRatio;
-        Log.d("", "POints(" + x1 + "," + y1 + ")(" + x2 + "," + y2 + ")(" + x3 + "," + y3 + ")(" + x4 + "," + y4 + ")");
+        Log.d("ScanLibraryUtils", "Points(" + x1 + "," + y1 + ")(" + x2 + "," + y2 + ")(" + x3 + "," + y3 + ")(" + x4 + "," + y4 + ")");
         Bitmap _bitmap = ((ScanActivity) getActivity()).getScannedBitmap(original, x1, y1, x2, y2, x3, y3, x4, y4);
         return _bitmap;
     }
